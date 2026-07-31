@@ -14,8 +14,20 @@
     </header>
 
     <main>
-        <h3>Hello this is the homepage!</h3>
-        <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ipsum fugit est, laboriosam vel odio quasi voluptates molestiae a deserunt tenetur!</p>
+        <form action="/register" method="POST">
+            <fieldset>
+                <legend>Create an account</legend>
+                <label for="username"><small>Enter Username</small></label>
+                <input type="text" placeholder="username" ="username" name="username" autocomplete="off">
+                
+                <label for="password"><small>Enter Password</small></label>
+                <input type="password" id="password" placeholder="password" name="password" autocomplete="off">
+
+                <br />
+                <button>Sign Up</button>
+                
+            </fieldset>
+        </form> 
     </main>
 
     <footer>
