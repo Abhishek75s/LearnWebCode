@@ -1,4 +1,22 @@
 import express from 'express';
+import Database from "better-sqlite3";
+
+// This creates or opens a file named 'database.db' in your project root
+const db = new Database("database.db"); 
+db.pragma("journal_mode = WAL");
+
+// database setup here
+const createTable = db.transaction(() => {
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username STRING NOT NULL UNIQUE,
+        password STRING NOT NULL
+        )
+    `).run()
+})
+
+createTable();
 
 const app = express();
 
