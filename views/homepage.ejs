@@ -1,17 +1,8 @@
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Page</title>
-    <link rel="stylesheet" href="/styles.css">
-</head>
+<%- include('includes/head') %>
 <body>
-    <header>
-        <h2><a href="/">Our wonderful App</a></h2>
-        <nav>
-            <a href="/login">Log In</a>
-        </nav>
-    </header>
+    
+    <%- include('includes/header') %>
 
     <main>
         <form action="/register" method="POST">
@@ -36,8 +27,7 @@
         </form> 
     </main>
 
-    <footer>
-        <small><span title="Copyright">&copy;2026</span> Our wonderful App</small>
-    </footer>
+    <%- include('includes/footer') %>
+    
 </body>
 </html>

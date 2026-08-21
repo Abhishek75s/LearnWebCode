@@ -1,7 +1,9 @@
 import express from 'express';
 import Database from "better-sqlite3";
 import bcrypt from "bcrypt";
-
+import jwt from "jsonwebtoken";
+import "dotenv/config";
+import cookieParser from 'cookie-parser';
 
 // This creates or opens a file named 'database.db' in your project root
 const db = new Database("database.db"); 
@@ -38,6 +40,9 @@ app.use(express.urlencoded({ extended: false })); // false: Uses the classic Nod
 // a built-in middleware function in Express.js used to serve static files like HTML, CSS, JS, img, video, etc.
 app.use(express.static('public'));
 
+// to compare and verify a cookie for its validity and activeness 
+app.use(cookieParser());
+
 // a middleware which performs some operation in between of request and response.
 app.use(function (req, res, next) {
     // locals is a built-in Express object used to store data/variables that HTML view templates like EJS can access it directly.
@@ -45,11 +50,27 @@ app.use(function (req, res, next) {
     // scope 2. res.app: Holds data for the entire life of the application across all users and pages
     res.locals.errors = [] // initialises empty array errors, means it will be empty on page load
 
+    // try to decode incoming cookies 
+    try {
+        const decoded = jwt.verify(req.cookies.myApp, process.env.JWT_SECRET);
+        req.user = decoded
+        
+    } catch(err) {
+        // req.user = false
+    }
+
+    res.locals.user = req.user
+    console.log(req.user);
+    
     next() // must be called always, to avoid endless loading and proceed to next inlined task.
 });
 
 app.get('/', (req, res) => {
-    res.render('homepage.ejs')
+    if(req.user){
+        return res.render('dashboard.ejs')
+    } else{
+        return res.render('homepage.ejs')
+    }
 });
 
 app.get('/login', (req, res) => {
@@ -96,8 +117,21 @@ app.post('/register', (req, res) => {
     req.body.password = bcrypt.hashSync(req.body.password, salt);
 
     const insertStmt =  db.prepare("INSERT INTO users (username, password) VALUES (?, ?)");
-    insertStmt.run(req.body.username, req.body.password);
+    const insertResult = insertStmt.run(req.body.username, req.body.password);
     
+    const lookupStmt = db.prepare("SELECT * FROM users WHERE ROWID = ?");
+    const userLookup = lookupStmt.get(insertResult.lastInsertRowid);
+    
+    // log the user IN by giving cookies
+    const ourTokenValue = jwt.sign({exp: Math.floor(Date.now() / 1000 ) + (60*60*24) , skyColor: "blue", userid: userLookup.id, username: userLookup.username}, process.env.JWT_SECRET);
+    
+    res.cookie("myApp", ourTokenValue, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+        maxAge: 1000 * 60 * 60 * 24  // 24 hrs cookie will expire after this
+        
+    })
     res.send("Thank You! credentials are valid");
 });
 
