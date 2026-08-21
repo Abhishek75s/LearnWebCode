@@ -43,7 +43,7 @@ app.use(express.static('public'));
 // to compare and verify a cookie for its validity and activeness 
 app.use(cookieParser());
 
-// a middleware which performs some operation in between of request and response.
+// a middleware, which performs some operation in between of request and response.
 app.use(function (req, res, next) {
     // locals is a built-in Express object used to store data/variables that HTML view templates like EJS can access it directly.
     // scope 1. res.locals: Holds data only for a single HTTP request-response cycle. It is completely wiped clean as soon as the page finish loading
@@ -56,11 +56,11 @@ app.use(function (req, res, next) {
         req.user = decoded
         
     } catch(err) {
-        // req.user = false
+        req.user = false
     }
 
-    res.locals.user = req.user
-    console.log(req.user);
+    res.locals.user = req.user  // ejs template can access this value
+    // console.log(req.user); // print the  user details if Logged IN 
     
     next() // must be called always, to avoid endless loading and proceed to next inlined task.
 });
@@ -75,6 +75,55 @@ app.get('/', (req, res) => {
 
 app.get('/login', (req, res) => {
     res.render('login.ejs');
+});
+
+app.post('/login', (req, res) => {
+    let errors = [];
+
+    // type check
+    if(typeof req.body.username !== "string") req.body.username = ""
+    if(typeof req.body.password !== "string") req.body.password = ""
+
+    // check for empty values
+    if(!req.body.username.trim()) errors = ['Username can not be empty.']
+    if(!req.body.password) errors = ['Password can not be empty.']
+
+    if(errors.length) {
+        return res.render('login', { errors });
+    }
+
+    const findUserStmt = db.prepare("SELECT * FROM users WHERE USERNAME = ?");
+    const userFound = findUserStmt.get(req.body.username)
+
+    if(!userFound) {
+        errors = ["User not Found!"];
+        return res.render('login', { errors });
+    }
+
+    const passwordMatched = bcrypt.compareSync(req.body.password, userFound.password)
+
+    if(!passwordMatched) {
+        errors = ["Invalid password!"];
+        return res.render('login', { errors });
+    }
+    
+    // log the user IN by giving a cookie
+    const ourTokenValue = jwt.sign({exp: Math.floor(Date.now() / 1000 ) + (60*60*24) , skyColor: "blue", userid: userFound.id, username: userFound.username}, process.env.JWT_SECRET);
+    
+    res.cookie("myApp", ourTokenValue, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+        maxAge: 1000 * 60 * 60 * 24  // 24 hrs cookie will expire after this
+        
+    })
+    res.redirect('/');
+    
+});
+
+app.get('/logout', (req, res) => {
+    res.clearCookie(('myApp'))
+    res.redirect('/login')
 });
 
 app.post('/register', (req, res) => {
@@ -96,6 +145,17 @@ app.post('/register', (req, res) => {
     //  -> In JS, checking a property of an object that does not exist results in undefined -> falsy value
     if(req.body.username && req.body.username.length < 3) errors.push('Username must be atleast 3 characters.') 
     if(req.body.username && req.body.username.length > 18) errors.push('Username can not be more than 18 characters.') 
+
+    // check if username already EXISTS
+    const usernameStmt = db.prepare("SELECT * FROM users WHERE username = ?");
+    const userFound = usernameStmt.get(req.body.username);
+    if(userFound) {
+        errors.push('Username already exists!')
+        
+        if(errors.length){
+        return res.render('homepage.ejs', { errors })
+    }
+    }
     
     if(req.body.password && req.body.password.length < 4) errors.push('Password must be atleast 4 characters.') 
     if(req.body.password && req.body.password.length > 20) errors.push('Password can not be more than 20 characters.') 
@@ -132,7 +192,7 @@ app.post('/register', (req, res) => {
         maxAge: 1000 * 60 * 60 * 24  // 24 hrs cookie will expire after this
         
     })
-    res.send("Thank You! credentials are valid");
+    res.redirect('/');
 });
 
 app.listen(3000);

@@ -1,10 +1,28 @@
 <html lang="en">
-    
     <%- include('includes/head') %>
-
     <body>
-        <h1>Hi, world is yours!! You're at LOGIN page now.</h1>
+        <%- include('includes/header') %>
+        <main>
+            <form action="/login" method="POST">
 
+                <% errors.forEach(error => { %>
+                    <p class="notice"><%= error %></p>
+                <% }); %>   
+                <h5>Log In</h5>
+                <fieldset>
+                    <legend>Enter your credentials</legend>
+                    <label for="username"><small>Enter Username <span title="Username must be between 3 and 18 characters.">&#9432;</span></small></label>
+                    <input type="text" placeholder="username" ="username" name="username" autocomplete="off">
+                    
+                    <label for="password"><small>Enter Password <span title="Password must be only alphanumeric and 4 to 20 chars long">&#x24D8;</span></small></label>
+                    <input type="password" id="password" placeholder="password" name="password" autocomplete="off">
+
+                    <br />
+                    <button>Login</button>
+                    
+                </fieldset>
+            </form> 
+        </main> 
         <%- include('includes/footer') %>
     </body>
 </html>

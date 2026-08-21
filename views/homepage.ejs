@@ -1,17 +1,14 @@
 <html lang="en">
 <%- include('includes/head') %>
 <body>
-    
     <%- include('includes/header') %>
-
     <main>
         <form action="/register" method="POST">
 
             <% errors.forEach(error => { %>
                 <p class="notice"><%= error %></p>
             <% }); %>
-            
-            
+            <h5>Sign Up</h5>
             <fieldset>
                 <legend>Create an account</legend>
                 <label for="username"><small>Enter Username <span title="Username must be between 3 and 18 characters.">&#9432;</span></small></label>
@@ -26,8 +23,6 @@
             </fieldset>
         </form> 
     </main>
-
     <%- include('includes/footer') %>
-    
 </body>
 </html>
