@@ -1,5 +1,7 @@
 import express from 'express';
 import Database from "better-sqlite3";
+import bcrypt from "bcrypt";
+
 
 // This creates or opens a file named 'database.db' in your project root
 const db = new Database("database.db"); 
@@ -85,9 +87,18 @@ app.post('/register', (req, res) => {
 
     if(errors.length){
         return res.render('homepage.ejs', { errors })
-    } else {
-        res.send('Thank you for filing out the form!')
     }
+
+    // save the new user into the db using a 'Prepared Statement'? and with encrypted password
+
+    // password encryption
+    const salt = bcrypt.genSaltSync(10) // 10 passes hashed password
+    req.body.password = bcrypt.hashSync(req.body.password, salt);
+
+    const insertStmt =  db.prepare("INSERT INTO users (username, password) VALUES (?, ?)");
+    insertStmt.run(req.body.username, req.body.password);
+    
+    res.send("Thank You! credentials are valid");
 });
 
 app.listen(3000);
