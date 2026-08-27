@@ -1,0 +1,18 @@
+<html lang="en">
+    <%- include('includes/head') %>
+    <body>
+        <%- include('includes/header') %>
+        <main>
+            <h3> <%= post.title %> </h3>
+
+            <article>
+                <p>
+                    <!-- Posted by: <%= post.username %> on <%= new Date(post.createdDate).getDate() %>/<%= new Date(post.createdDate).getMonth() + 1 %>/<%= new Date(post.createdDate).getFullYear() %> (DD/MM/YYYY) -->
+                    Posted by: <%= post.username %> on <%= new Date(post.createdDate).getDate() %> <%= new Date(post.createdDate).toLocaleString('en-US', { month: 'short' })%>, <%= new Date(post.createdDate).getFullYear() %> 
+                </p>
+            </article>
+            
+        </main> 
+        <%- include('includes/footer') %>
+    </body>
+</html>

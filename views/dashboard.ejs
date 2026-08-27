@@ -8,7 +8,13 @@
     <main>
         <div>
             <H1>Welcome to your Dashboard</H1>
-            <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ex aperiam possimus natus atque porro tenetur ad totam alias quam, quo eum omnis quaerat eligendi nesciunt beatae voluptatibus? Sed, accusamus nemo!</p>
+
+            <ul>
+                <% posts.forEach(post => { %>
+                    <h4><li><a href="/post/<%= post.id%>"><%= post.title %> on <small><%= new Date(post.createdDate).getDate() %> <%= new Date(post.createdDate).toLocaleString('en-US', { month: 'short' })%>, <%= new Date(post.createdDate).getFullYear() %> </small></a> </li></h4>
+                <% }) %>
+            </ul>
+            
         </div>
     </main>
 

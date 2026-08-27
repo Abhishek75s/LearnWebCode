@@ -80,7 +80,13 @@ app.use(function (req, res, next) {
 
 app.get('/', (req, res) => {
     if(req.user){
-        return res.render('dashboard.ejs')
+        const fetchAllPostsStmt = db.prepare('SELECT * FROM posts WHERE authorid = ?')
+        const myAllPosts = fetchAllPostsStmt.all(req.user.userid) // all method fetches all the matching rows from the DB while get is used to fetch single record
+
+        //  db.all() -> It always returns an Array of objects, if nothing matches return [] empty array.
+        //  db.get() -> It returns a single Object. If no row matches, it returns undefined.
+
+        return res.render('dashboard.ejs', { posts: myAllPosts})
     } else{
         return res.render('login.ejs')
     }
@@ -88,7 +94,6 @@ app.get('/', (req, res) => {
 
 app.get('/login', (req, res) => {
     res.render('login.ejs');
-    res.send('post created')
 });
 
 app.post('/login', (req, res) => {
@@ -138,6 +143,7 @@ app.post('/login', (req, res) => {
 app.get('/logout', (req, res) => {
     res.clearCookie(('myApp'))
     res.redirect('/login')
+    res.send('okay')
 });
 
 app.get('/create-post', LoggedInCheck, (req, res) => {
@@ -169,11 +175,25 @@ function commonPostValidation(req) {
     return errors;
 }
 
+app.get('/post/:id', LoggedInCheck, (req, res) => {
+    // const fetchPostStmt = db.prepare('SELECT * FROM posts WHERE id = ?')
+
+    // extract data from different tables using DB JOINS
+    const fetchPostStmt = db.prepare('SELECT posts.*, users.username FROM posts INNER JOIN users ON posts.authorid = users.id WHERE posts.id = ?')
+    const getPost = fetchPostStmt.get(req.params.id)
+
+    if(!getPost) {
+        return res.redirect('/')
+    }
+
+    res.render('view-post.ejs', { post: getPost}) // in modern JS only { post } is also fine instead of { post: post }, because key name and value name is same
+});
+
 app.post('/create-post', LoggedInCheck, (req, res) => {
     const errors = commonPostValidation(req);
     // console.log(req.user);
     if(errors.length){
-        res.render('create-post', {errors})
+        return res.render('create-post.ejs', {errors})
     }
 
     // save new post to DB
@@ -182,6 +202,8 @@ app.post('/create-post', LoggedInCheck, (req, res) => {
 
     const getPostDB = db.prepare('SELECT * FROM posts WHERE ROWID = ?')
     const savedPost = getPostDB.get(result.lastInsertRowid)
+
+    // console.log(savedPost);
 
     res.redirect(`/post/${savedPost.id}`)
 });
