@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
 import cookieParser from 'cookie-parser';
+import sanitizeHTML from 'sanitize-html';
 
 // This creates or opens a file named 'database.db' in your project root
 const db = new Database("database.db"); 
@@ -16,6 +17,18 @@ const createTable = db.transaction(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username STRING NOT NULL UNIQUE,
         password STRING NOT NULL
+        )
+    `).run()
+
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        createdDate TEXT,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        authorid INTEGER,
+        username STRING NOT NULL, 
+        FOREIGN KEY (authorid) REFERENCES users (id)
         )
     `).run()
 })
@@ -69,12 +82,13 @@ app.get('/', (req, res) => {
     if(req.user){
         return res.render('dashboard.ejs')
     } else{
-        return res.render('homepage.ejs')
+        return res.render('login.ejs')
     }
 });
 
 app.get('/login', (req, res) => {
     res.render('login.ejs');
+    res.send('post created')
 });
 
 app.post('/login', (req, res) => {
@@ -93,7 +107,7 @@ app.post('/login', (req, res) => {
     }
 
     const findUserStmt = db.prepare("SELECT * FROM users WHERE USERNAME = ?");
-    const userFound = findUserStmt.get(req.body.username)
+    const userFound = findUserStmt.get(req.body.username.trim())
 
     if(!userFound) {
         errors = ["User not Found!"];
@@ -126,7 +140,53 @@ app.get('/logout', (req, res) => {
     res.redirect('/login')
 });
 
-app.post('/register', (req, res) => {
+app.get('/create-post', LoggedInCheck, (req, res) => {
+    res.render('create-post.ejs');
+});
+
+function LoggedInCheck(req, res, next) {
+    if(req.user) {
+        return next();
+    }
+    res.redirect('/');
+    res.send("OK")
+    next();
+}
+
+function commonPostValidation(req) {
+    const errors = []
+
+    if(typeof req.body.title !== 'string') req.body.title = ''
+    if(typeof req.body.body !== 'string') req.body.body = ''
+    
+    // sanitize HTML 
+    req.body.title = sanitizeHTML(req.body.title.trim(), { allowedTags: [], allowedAttributes: {} })
+    req.body.body = sanitizeHTML(req.body.body.trim(), { allowedTags: [], allowedAttributes: {} })
+
+    if(!req.body.title) errors.push('You must provide a Title for your Post!')
+    if(!req.body.body) errors.push('You must provide Content for your Post!')
+
+    return errors;
+}
+
+app.post('/create-post', LoggedInCheck, (req, res) => {
+    const errors = commonPostValidation(req);
+    // console.log(req.user);
+    if(errors.length){
+        res.render('create-post', {errors})
+    }
+
+    // save new post to DB
+    const newPostStmt = db.prepare('INSERT INTO posts (title, body, authorid, username, createdDate) VALUES (?, ?, ?, ?, ?)')
+    const result = newPostStmt.run(req.body.title, req.body.body, req.user.userid, req.user.username, new Date().toISOString())
+
+    const getPostDB = db.prepare('SELECT * FROM posts WHERE ROWID = ?')
+    const savedPost = getPostDB.get(result.lastInsertRowid)
+
+    res.redirect(`/post/${savedPost.id}`)
+});
+
+app.post('/register', LoggedInCheck, (req, res) => {
     const errors = []
 
     // sanitize the user input
@@ -148,7 +208,7 @@ app.post('/register', (req, res) => {
 
     // check if username already EXISTS
     const usernameStmt = db.prepare("SELECT * FROM users WHERE username = ?");
-    const userFound = usernameStmt.get(req.body.username);
+    const userFound = usernameStmt.get(req.body.username.trim());
     if(userFound) {
         errors.push('Username already exists!')
         

@@ -1,0 +1,30 @@
+<html lang="en">
+    <%- include('includes/head') %>
+    <body>
+        <%- include('includes/header') %>
+        <main>
+            <form action="/create-post" method="POST">
+
+                <% errors.forEach(error => { %>
+                    <p class="notice"><%= error %></p>
+                <% }); %>   
+                <h5>Create a New Post</h5>
+                <fieldset>
+                    <legend>Create a new Post</legend>
+                    <label for="title"><small>Title<span title="Description can be 50 characters long.">&#9432;</span></small></label>
+                    <input type="text" id="title" name="title" autocomplete="off" />
+                                        
+                    <label for="body"><small>Content</small></label>
+                    <textarea name="body" id="body"></textarea>
+                    
+                    <br />
+                    <br />
+                    <button type="reset">Cancel</button> &nbsp;
+                    <button type="submit">Create Post</button>
+                    
+                </fieldset>
+            </form> 
+        </main> 
+        <%- include('includes/footer') %>
+    </body>
+</html>
