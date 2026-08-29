@@ -219,6 +219,26 @@ app.post('/edit-post/:id', (req, res) => {
     res.redirect(`/post/${req.params.id}`)
 });
 
+app.post('/delete-post/:id', (req, res) => {
+    // try to lookup the post in question
+    const postLookupStmt = db.prepare('SELECT * FROM posts WHERE posts.id = ?')
+    const post = postLookupStmt.get(req.params.id)
+
+    if(!post) {
+        return res.redirect('/')
+    }
+
+    // check only post author has access to edit it
+    if(post.authorid !== req.user.userid) {
+        res.redirect('/')
+    }
+
+    const deletePostStmt = db.prepare('DELETE FROM posts WHERE id = ?')
+    deletePostStmt.run(req.params.id)
+
+    res.redirect('/')
+});
+
 app.get('/post/:id', LoggedInCheck, (req, res) => {
     // const fetchPostStmt = db.prepare('SELECT * FROM posts WHERE id = ?')
 
