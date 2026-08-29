@@ -87,13 +87,17 @@ app.get('/', (req, res) => {
         //  db.get() -> It returns a single Object. If no row matches, it returns undefined.
 
         return res.render('dashboard.ejs', { posts: myAllPosts})
-    } else{
+    } else {
         return res.render('login.ejs')
     }
 });
 
 app.get('/login', (req, res) => {
     res.render('login.ejs');
+});
+
+app.get('/sign-up', (req, res) => {
+    res.render('sign-up.ejs');
 });
 
 app.post('/login', (req, res) => {
@@ -272,7 +276,7 @@ app.post('/create-post', LoggedInCheck, (req, res) => {
     res.redirect(`/post/${savedPost.id}`)
 });
 
-app.post('/register', LoggedInCheck, (req, res) => {
+app.post('/register', (req, res) => {
     const errors = []
 
     // sanitize the user input
@@ -299,7 +303,7 @@ app.post('/register', LoggedInCheck, (req, res) => {
         errors.push('Username already exists!')
         
         if(errors.length){
-        return res.render('homepage.ejs', { errors })
+        return res.render('sign-up.ejs', { errors })
     }
     }
     
@@ -313,7 +317,7 @@ app.post('/register', LoggedInCheck, (req, res) => {
     // if(req.body.password && !req.body.password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/)) errors.push('Password criteria did not met.')
 
     if(errors.length){
-        return res.render('homepage.ejs', { errors })
+        return res.render('sign-up.ejs', { errors })
     }
 
     // save the new user into the db using a 'Prepared Statement'? and with encrypted password
