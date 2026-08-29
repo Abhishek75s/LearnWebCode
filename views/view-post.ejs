@@ -8,9 +8,17 @@
             <article>
                 <p>
                     <!-- Posted by: <%= post.username %> on <%= new Date(post.createdDate).getDate() %>/<%= new Date(post.createdDate).getMonth() + 1 %>/<%= new Date(post.createdDate).getFullYear() %> (DD/MM/YYYY) -->
-                    Posted by: <%= post.username %> on <%= new Date(post.createdDate).getDate() %> <%= new Date(post.createdDate).toLocaleString('en-US', { month: 'short' })%>, <%= new Date(post.createdDate).getFullYear() %> 
+                    <small>Posted by: <%= post.username %> on <%= new Date(post.createdDate).getDate() %> <%= new Date(post.createdDate).toLocaleString('en-US', { month: 'short' })%>, <%= new Date(post.createdDate).getFullYear() %> </small>
+                    <br/>
+                    <br/>
+                    <%= post.body %>
                 </p>
             </article>
+
+            <a href="/edit-post/<%= post.id %>" class="button">Edit Post</a> &nbsp;
+            <form style="display: inline;" action="/delete-post/<%= post.id %>" method="POST">
+                <button>Delete Post</button>
+            </form>
             
         </main> 
         <%- include('includes/footer') %>

@@ -80,7 +80,7 @@ app.use(function (req, res, next) {
 
 app.get('/', (req, res) => {
     if(req.user){
-        const fetchAllPostsStmt = db.prepare('SELECT * FROM posts WHERE authorid = ?')
+        const fetchAllPostsStmt = db.prepare('SELECT * FROM posts WHERE authorid = ? ORDER BY createdDate DESC')
         const myAllPosts = fetchAllPostsStmt.all(req.user.userid) // all method fetches all the matching rows from the DB while get is used to fetch single record
 
         //  db.all() -> It always returns an Array of objects, if nothing matches return [] empty array.
@@ -174,6 +174,50 @@ function commonPostValidation(req) {
 
     return errors;
 }
+
+app.get('/edit-post/:id', (req, res) => {
+    // try to lookup the post in question
+    const postLookupStmt = db.prepare('SELECT * FROM posts WHERE posts.id = ?')
+    const post = postLookupStmt.get(req.params.id)
+
+    if(!post) {
+        return res.redirect('/')
+    }
+
+    // check only post author has access to edit it
+    if(post.authorid !== req.user.userid) {
+        res.redirect('/')
+    }
+    
+    // render edit post template if post is FOUND
+    res.render('edit-post', { post })    // no { post: post } used here
+});
+
+app.post('/edit-post/:id', (req, res) => {
+    // try to lookup the post in question
+    const postLookupStmt = db.prepare('SELECT * FROM posts WHERE posts.id = ?')
+    const post = postLookupStmt.get(req.params.id)
+
+    if(!post) {
+        return res.redirect('/')
+    }
+
+    // check only post author has access to edit it
+    if(post.authorid !== req.user.userid) {
+        res.redirect('/')
+    }
+
+    const errors = commonPostValidation(req);
+
+    if(errors.length !== 0) {
+        return res.render('edit-post', { errros })
+    }
+
+    const updatePostStmt = db.prepare('UPDATE posts SET title = ?, body = ? WHERE id = ?')
+    updatePostStmt.run(req.body.title, req.body.body, req.params.id)
+
+    res.redirect(`/post/${req.params.id}`)
+});
 
 app.get('/post/:id', LoggedInCheck, (req, res) => {
     // const fetchPostStmt = db.prepare('SELECT * FROM posts WHERE id = ?')
